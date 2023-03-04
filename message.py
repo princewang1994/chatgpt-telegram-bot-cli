@@ -1,8 +1,14 @@
+
 class Message(object):
 
-    def __init__(self, role, content) -> None:
+    def __init__(self, role, content, success=True) -> None:
         self.role = role
         self.content = content
+        self.success = success
+
+    @staticmethod
+    def from_dict(data):
+        return Message(**data)
 
     def to_dict(self):
         return dict(role=self.role, content=self.content)

@@ -1,0 +1,4 @@
+pyyaml
+addict
+prompt_toolkit
+openai>=0.27.0
