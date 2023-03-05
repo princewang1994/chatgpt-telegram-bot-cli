@@ -113,3 +113,7 @@ Command List:
 - `/ls`: list all saved sessions
 - `/new`: create a new session
 - `/save`: save current session
+
+Screenshot: 
+
+![](./screenshot.png)
