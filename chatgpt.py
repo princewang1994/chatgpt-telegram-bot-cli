@@ -3,6 +3,7 @@ import openai
 import argparse
 import json
 import random
+import string
 
 from addict import Dict
 from message import Message
@@ -10,8 +11,6 @@ from enum import Enum
 import datetime
 
 
-import random
-import string
 
 def generate_random_string(length=8):
     # 生成长度为 length 的随机字符串
@@ -43,12 +42,12 @@ class ChatSession(object):
         self.model = model
         self.session_id = session_id
         self.max_history = max_history
-        self.history = []
+        self.history = history or []
         for i, his in enumerate(self.history):
-            if isinstance(his, Message):
-                self.history[i] = Message.from_dict(self.history[i])
+            if not isinstance(his, Message):
+                self._history[i] = Message.from_dict(self.history[i])
 
-    def chat(self, user_input: str):
+    def chat(self, user_input: str) -> Message:
         # init with system prompt
         messages = [self.sys_prompt.to_dict()]
 
@@ -70,9 +69,11 @@ class ChatSession(object):
         try:
             ret = completion.choices[0].message
             response_msg = Message(role=ret.role, content=ret.content)
-            self.history += [cur_msg, response_msg]
+            self.history.extend([cur_msg, response_msg])
             return response_msg
-        except:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             return None
         
     def save(self, output_root):
@@ -80,7 +81,7 @@ class ChatSession(object):
             session_id=self.session_id,
             time=generate_datetime_str(),
             system=self.sys_prompt.to_dict(),
-            history=[msg.to_dict() for msg in  self.history]
+            history=[msg.to_dict() for msg in self.history]
         )
         save_path = os.path.join(output_root, f"{self.session_id}.json")
         json.dump(save_obj, open(save_path, "w"), ensure_ascii=False, indent=4)
@@ -108,13 +109,14 @@ class ChatGPT(object):
         print("You have started a new chat session")
         session_id = generate_random_string(length=8)
         self.current_session = ChatSession(session_id, self.model_name, self.sys_prompt)
+        return self.current_session.session_id
 
     def resume_session(self, session_id=None):
         # save current session
         if self.current_session:
             self.save()
+        
         # resume session
-        # import pdb; pdb.set_trace()
         if session_id:
             session_file = os.path.join(self.save_root, f"{session_id}.json")
         else:
