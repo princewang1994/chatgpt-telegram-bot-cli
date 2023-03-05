@@ -3,3 +3,6 @@ openai:
 
 save:
   root: "./session"
+
+tgbot:
+  token: "TELEGRAM TOKEN"
