@@ -40,6 +40,8 @@ def main(args):
     chatgpt = ChatGPT(config.openai.api_key, save_root=config.save.root)
     chatgpt.resume_session()
     commands = ChatGPTCommand(chatgpt, config)
+
+    print(f'[System]: Prompt - "{chatgpt.sys_prompt.content}"')
     
     while True:
 
