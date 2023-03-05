@@ -66,8 +66,6 @@ def main(args):
     # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
-    # 启动 bot
-    try:
-        application.run_polling()
-    except (KeyboardInterrupt, EOFError):
-        chatgpt.save()
+    # start bot
+    application.run_polling()
+    chatgpt.save()

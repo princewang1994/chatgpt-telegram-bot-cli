@@ -45,7 +45,7 @@ class ChatSession(object):
         self.history = history or []
         for i, his in enumerate(self.history):
             if not isinstance(his, Message):
-                self._history[i] = Message.from_dict(self.history[i])
+                self.history[i] = Message.from_dict(self.history[i])
 
     def chat(self, user_input: str) -> Message:
         # init with system prompt
