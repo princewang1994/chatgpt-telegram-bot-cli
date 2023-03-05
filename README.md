@@ -1,15 +1,15 @@
-# ChatGPT Bot
+# ChatGPT Telegram-Bot/CLI Tool
 
-This project uses the chatgpt API to enable conversational capabilities both in the command console and through a Telegram bot. The chatgpt API is used to process natural language, understand the intent of the user and generate appropriate responses.
+This project uses the OpenAI API to enable conversational capabilities both in the command console and through a Telegram bot. The ChatGPT API is used to process natural language, understand the intent of the user and generate appropriate responses. (This introduction is almost written by ChatGPT)
 
 ## Usage
 
-To use the project, please follow these instructions:
+To use this tool, please follow these instructions:
 
 1. Clone the repository to your local machine.
 
 ```
-git clone git@github.com:princewang1994/chatgpt-bot.git
+git clone https://github.com/princewang1994/chatgpt-telegram-bot-cli.git
 ```
 
 2. Install the requirements using pip.
