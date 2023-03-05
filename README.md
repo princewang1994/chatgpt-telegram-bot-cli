@@ -42,7 +42,7 @@ tgbot:
 for cli mode:
 
 ```shell
-python3 launch.py --config=configs/my.yaml --mode=tgbot
+python3 launch.py --config=configs/my.yaml
 ```
 
 for telegram-bot mode:
