@@ -1,4 +1,5 @@
 pyyaml
 addict
 prompt_toolkit
+python-telegram-bot
 openai>=0.27.0
