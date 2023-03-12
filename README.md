@@ -58,10 +58,14 @@ python launch.py --config=configs/my.yaml --mode=tgbot
 Command List: 
 - `help`: show this document
 - `his`: show history of current session
-- `ls`: list all saved sessions
+- `list`: list all saved sessions
 - `new`: create a new session
-- `resume`: resume specific session with session id
 - `save`: save current session
+- `info`: show current session information
+- `rename NEW_NAME`: set session name
+- `max MAX_HISTORY`: set max history(default max_history = 10)
+- `ch SESSION_ID`: resume(change) to specific session with session id
+- `sys SYSTEM_PROMPT`: update system prompt
 - `^C`: cancel inputing
 - `^D`: exit chatting
 
@@ -109,10 +113,16 @@ You should see the output "Hello, world!" printed to the console.
 ## Telegram Mode
 
 Command List: 
+- `/help`: show this document
 - `/his`: show history of current session
-- `/ls`: list all saved sessions
+- `/list`: list all saved sessions
 - `/new`: create a new session
 - `/save`: save current session
+- `/info`: show current session information
+- `/rename NEW_NAME`: set session name
+- `/max MAX_HISTORY`: set max history(default max_history = 10)
+- `/ch SESSION_ID`: resume(change) to specific session with session id
+- `/sys SYSTEM_PROMPT`: update system prompt
 
 Screenshot: 
 

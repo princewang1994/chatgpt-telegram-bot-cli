@@ -37,11 +37,16 @@ def main(args):
     config = init_config(args.config)
 
     # start commandline chatting
-    chatgpt = ChatGPT(config.openai.api_key, save_root=config.save.root)
+    chatgpt = ChatGPT(
+        api_key=config.openai.api_key, 
+        save_root=config.save.root, 
+        save_mode=config.get("save_mode", "auto"),
+        max_history=config.get("init_max_history", 10)
+    )
     chatgpt.resume_session()
     commands = ChatGPTCommand(chatgpt, config)
 
-    print(f'[System]: Prompt - "{chatgpt.sys_prompt.content}"')
+    print(f'[System]: Prompt - "{chatgpt.current_session.system}"')
     
     while True:
 

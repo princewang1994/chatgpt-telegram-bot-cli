@@ -1,6 +1,6 @@
 import os
 import telegram
-from chatgpt import ChatGPT
+from chatgpt import ChatGPT, ChatSession
 from config import init_config
 from telegram import Update
 from telegram.ext import MessageHandler, Application, CommandHandler, ContextTypes, filters
@@ -27,16 +27,60 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def save(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg = chatgpt.save()
+    msg = chatgpt.save(verbose=True)
     await update.message.reply_text(f"your session({chatgpt.current_session.session_id}) has been saved")
+
+
+async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    session = chatgpt.current_session
+    info = f"""
+    id='{session.session_id}'
+    name={session.name}
+    model={session.model}
+    system='{session.system}'
+    history={len(session.history)}
+    max_history={session.max_history}
+    """
+    await update.message.reply_text(info)
+
+
+async def ch(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    session_id = update.message.text.split()[-1]
+    chatgpt.resume_session(session_id)
+    await update.message.reply_text(f"change session to -> {session_id}")
+
+
+async def rename(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        assert len(update.message.text.split()) > 1
+        name = " ".join(update.message.text.split()[1:])
+    except AssertionError:
+        await update.message.reply_text(f"rename: needs param - name")
+        return
+    chatgpt.current_session.set_session_name(name)
+    await update.message.reply_text(f"your session({chatgpt.current_session.session_id}) has renamed to -> {name}")
+
+
+async def system(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    system = " ".join(update.message.text.split()[1:])
+    chatgpt.current_session.set_system(system)
+    await update.message.reply_text(f"your session({chatgpt.current_session.session_id})'s system has changed to -> {system}")
 
 
 async def ls(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sessions = os.listdir(config.save.root)
-    session_ids = [sess.split(".")[0] for sess in sessions if sess.endswith(".json")]
+    sessions = [sess for sess in sessions if sess.endswith(".json")]
+    
     reply = ["All saved sessions:"]
-    for _id in session_ids:
-        reply.append(f"- {_id}")
+    
+    for idx, sess in enumerate(sessions):
+        ckpt = os.path.join(config.save.root, sess)
+        sess = ChatSession.resume_from_file(ckpt)
+        
+        s = f"{idx}.({sess.session_id}): {sess.name}"
+        if sess.id == chatgpt.current_session.id:
+            s += " <- current"
+        reply.append(s)
     reply = "\n".join(reply)
     await update.message.reply_text(reply)
 
@@ -52,7 +96,7 @@ def main(args):
     
     config = init_config(args.config)
     # start chatting
-    chatgpt = ChatGPT(config.openai.api_key, save_root=config.save.root)
+    chatgpt = ChatGPT(config.openai.api_key, save_root=config.save.root, save_mode=config.save.mode)
     chatgpt.resume_session()
 
     application = Application.builder().token(config.tgbot.token).build()
@@ -61,7 +105,11 @@ def main(args):
     application.add_handler(CommandHandler("new", new_sesion))
     application.add_handler(CommandHandler("his", history))
     application.add_handler(CommandHandler("save", save))
-    application.add_handler(CommandHandler("ls", ls))
+    application.add_handler(CommandHandler("list", ls))
+    application.add_handler(CommandHandler("rename", rename))
+    application.add_handler(CommandHandler("sys", rename))
+    application.add_handler(CommandHandler("ch", ch))
+    application.add_handler(CommandHandler("info", info))
 
     # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))

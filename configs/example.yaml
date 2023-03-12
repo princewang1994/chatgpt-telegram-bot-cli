@@ -1,7 +1,12 @@
 openai:
   api_key: "YOUR_OPENAI_API_KEY"
 
+chatgpt:
+  init_prompt: "assistant"  # predifined: ["assistant"]
+  init_max_history: 10
+
 save:
+  mode: "auto"
   root: "./session"
 
 tgbot:
