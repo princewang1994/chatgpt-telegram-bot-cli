@@ -1,5 +1,6 @@
 __pycache__/
 
 local.yaml
+run.yaml
 session
 .history.txt
