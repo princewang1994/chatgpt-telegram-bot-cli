@@ -7,7 +7,7 @@ chatgpt:
 
 save:
   mode: "auto"
-  root: "./session"
+  root: "/data/session"
 
 tgbot:
   token: "TELEGRAM TOKEN"

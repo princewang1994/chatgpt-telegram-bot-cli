@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 cd ${WORKDIR}
@@ -31,7 +31,8 @@ else
   
   # replace tgbot.token with $TELEGRAM_TOKEN
   sed -i "s/token:.*/token: $TELEGRAM_TOKEN/g" $CONFIG_DIR/run.yaml
+
 fi
 
 
-python3 launch.py --config=${WORKDIR}/configs/run.yaml --mode=tgbot
+python3 launch.py --config=$CONFIG_DIR/run.yaml --mode=tgbot

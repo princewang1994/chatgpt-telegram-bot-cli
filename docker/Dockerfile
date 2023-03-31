@@ -14,10 +14,12 @@ ENV LANG="C.UTF-8" \
 
 WORKDIR ${WORKDIR}
 
-RUN python_ver=$(python3 -V | awk '{print $2}') \
+RUN mkdir -p ${WORKDIR} \
+    && python_ver=$(python3 -V | awk '{print $2}') \
     && git clone -b master ${REPO_URL} ${WORKDIR} --depth=1 --recurse-submodule \
     && git config --global --add safe.directory ${WORKDIR} \
-    && chmod +x ${WORKDIR}/docker/entrypoint.sh
+    && chmod +x ${WORKDIR}/docker/entrypoint.sh \
+    && ls -l ${WORKDIR}/docker/entrypoint.sh
 
 VOLUME ["/data"]
 
