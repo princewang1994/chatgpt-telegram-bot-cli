@@ -127,3 +127,23 @@ Command List:
 Screenshot: 
 
 ![](./screenshot.png)
+
+
+## Deploy with Docker
+
+```shell
+docker run -d \
+   --name chatgpt \
+   -v /path/to/data:/data \
+   -e OPENAI_KEY="KEY" \
+   -e TELEGRAM_TOKEN="TOKEN" \
+   princewang1994/chatgpt:latest
+```
+
+## Build from Dockerfile
+
+```shell
+git clone https://github.com/princewang1994/chatgpt-telegram-bot-cli.git
+cd chatgpt-telegram-bot-cli
+docker build --no-cache -f docker/Dockerfile -t chatgpt .
+```
