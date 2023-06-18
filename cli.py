@@ -38,7 +38,7 @@ def main(args):
 
     # start commandline chatting
     chatgpt = ChatGPT(
-        api_key=config.openai.api_key, 
+        config=config.openai, 
         save_root=config.save.root, 
         save_mode=config.get("save_mode", "auto"),
         max_history=config.get("init_max_history", 10)

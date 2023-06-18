@@ -1,0 +1,16 @@
+openai:
+  api_key: "YOUR_OPENAI_API_KEY"
+  api_type: "azure"
+  api_base: "YOUR_AZURE_BASE"
+  api_version: null
+  
+chatgpt:
+  init_prompt: "assistant"  # predifined: ["assistant"]
+  init_max_history: 10
+
+save:
+  mode: "auto"
+  root: "/data/session"
+
+tgbot:
+  token: "TELEGRAM TOKEN"

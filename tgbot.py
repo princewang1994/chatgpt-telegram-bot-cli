@@ -96,7 +96,7 @@ def main(args):
     
     config = init_config(args.config)
     # start chatting
-    chatgpt = ChatGPT(config.openai.api_key, save_root=config.save.root, save_mode=config.save.mode)
+    chatgpt = ChatGPT(config.openai, save_root=config.save.root, save_mode=config.save.mode)
     chatgpt.resume_session()
 
     application = Application.builder().token(config.tgbot.token).build()

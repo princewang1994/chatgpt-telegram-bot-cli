@@ -112,6 +112,7 @@ class ChatSession(object):
             for msg in messages:
                 logger.debug(msg)
             completion = openai.ChatCompletion.create(
+                engine="chatgpt",
                 model=self.model,
                 messages=messages
             )
@@ -199,7 +200,7 @@ class ChatSession(object):
 class ChatGPT(object):
 
     def __init__(self, 
-            api_key, 
+            config, 
             model="gpt-3.5-turbo", 
             init_system="assistant",
             max_history=10,
@@ -207,14 +208,18 @@ class ChatGPT(object):
             save_mode="auto"
         ):
         self.model_name = model
-        self.auth(api_key)
+        self.auth(**config)
         self.init_system = init_system
         self.current_session = None
         self.save_mode = save_mode
         self.save_root = save_root
         self.max_history = max_history
         
-    def auth(self, api_key):
+    def auth(self, api_type, api_base, api_version, api_key):
+        if api_type == "azure":
+            openai.api_type = "azure"
+            openai.api_base = api_base
+            openai.api_version = api_version
         openai.api_key = api_key
 
     def new_session(self):
