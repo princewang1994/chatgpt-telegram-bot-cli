@@ -173,6 +173,7 @@ class ChatSession(object):
             session_id=self.session_id,
             session_name=self.session_name,
             model=self.model,
+            engine=self.engine,
             time=generate_datetime_str(),
             system=self.system,
             max_history=self.max_history,
