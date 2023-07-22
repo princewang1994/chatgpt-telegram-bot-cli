@@ -215,7 +215,7 @@ class ChatGPT(object):
         self.save_root = save_root
         self.max_history = max_history
         
-    def auth(self, api_type, api_base, api_version, api_key):
+    def auth(self, api_key, api_type="openai", api_base=None, api_version="2023-03-15-preview"):
         if api_type == "azure":
             openai.api_type = "azure"
             openai.api_base = api_base
