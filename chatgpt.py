@@ -73,6 +73,7 @@ class ChatSession(object):
             session_id, 
             session_name=None, 
             model="gpt-3.5-turbo", 
+            engine=None,
             system=SYSTEM_PROMPTS["assistant"], 
             max_history=10, 
             history=None,
@@ -83,6 +84,7 @@ class ChatSession(object):
         self.session_id = session_id
         self.session_name = session_name
         self.model = model
+        self.engine = engine
         self.system = system
         self.max_history = max_history
         self.history = history or []
@@ -112,7 +114,7 @@ class ChatSession(object):
             for msg in messages:
                 logger.debug(msg)
             completion = openai.ChatCompletion.create(
-                engine="chatgpt",
+                engine=self.engine,
                 model=self.model,
                 messages=messages
             )
@@ -188,6 +190,7 @@ class ChatSession(object):
             session_id=save_obj["session_id"], 
             session_name=save_obj.get("session_name", None),
             model=save_obj.get("model", "gpt-3.5-turbo"), 
+            engine=save_obj.get("engine", None),
             system=save_obj.get("system", SYSTEM_PROMPTS["assistant"]), 
             max_history=save_obj.get("max_history", 10),
             history=save_obj["history"],
@@ -208,6 +211,7 @@ class ChatGPT(object):
             save_mode="auto"
         ):
         self.model_name = model
+        self.engine = config.get("engine", None)
         self.auth(**config)
         self.init_system = init_system
         self.current_session = None
@@ -215,7 +219,7 @@ class ChatGPT(object):
         self.save_root = save_root
         self.max_history = max_history
         
-    def auth(self, api_key, api_type="openai", api_base=None, api_version="2023-03-15-preview"):
+    def auth(self, api_key, api_type="openai", api_base=None, api_version="2023-03-15-preview", **kwargs):
         if api_type == "azure":
             openai.api_type = "azure"
             openai.api_base = api_base
@@ -231,6 +235,7 @@ class ChatGPT(object):
             session_id, 
             session_name=None,
             model=self.model_name, 
+            engine=self.engine,
             system=SYSTEM_PROMPTS[self.init_system],
             max_history=self.max_history,
             save_mode=self.save_mode,
