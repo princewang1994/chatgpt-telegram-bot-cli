@@ -7,6 +7,7 @@ import string
 
 import logging
 from addict import Dict
+from collections import defaultdict
 from message import Message
 from enum import Enum
 import datetime
@@ -72,8 +73,8 @@ class ChatSession(object):
             session_id, 
             session_name,
             chatgpt,
+            create_time,
             system=DEFAULT_SYSTEM_PROMPTS, 
-            max_history=10, 
             history=None
         ):
 
@@ -82,10 +83,9 @@ class ChatSession(object):
         self.model = chatgpt.model
         self.engine = chatgpt.engine
         self.system = system
-        self.max_history = max_history
+        self.create_time = create_time
+        self.max_history = chatgpt.max_history
         self.history = history or []
-        self.save_root = chatgpt.save_root
-        self.save_mode = chatgpt.save_mode
 
         for i, his in enumerate(self.history):
             if not isinstance(his, Message):
@@ -134,17 +134,14 @@ class ChatSession(object):
     def name(self):
         return self.session_name or f"Untitled"
 
-    @auto_save
     def set_session_name(self, session_name):
         """ set session name
         """
         self.session_name = session_name
 
-    @auto_save
     def set_max_history(self, max_history):
         self.max_history = max_history
 
-    @auto_save
     def set_system(self, system):
         """ set session name
         """
@@ -163,18 +160,18 @@ class ChatSession(object):
         )
         """
         
-    def save(self, verbose=False):
+    def save(self, save_root, verbose=False):
+        
         save_obj = dict(
             session_id=self.session_id,
             session_name=self.session_name,
-            model=self.model,
-            engine=self.engine,
-            time=generate_datetime_str(),
+            create_time=self.create_time,
             system=self.system,
-            max_history=self.max_history,
             history=[msg.to_dict() for msg in self.history]
         )
-        save_path = os.path.join(self.save_root, f"{self.session_id}.json")
+        
+        os.makedirs(save_root, exist_ok=True)
+        save_path = os.path.join(save_root, f"{self.session_id}.json")
         json.dump(save_obj, open(save_path, "w"), ensure_ascii=False, indent=4)
         if verbose:
             logger.info(f"[System] Your session-{self.session_id} has been saved to: {save_path}")
@@ -186,6 +183,7 @@ class ChatSession(object):
             session_id=save_obj["session_id"], 
             session_name=save_obj.get("session_name", None),
             chatgpt=chatgpt,
+            create_time=save_obj["create_time"],
             system=save_obj.get("system", DEFAULT_SYSTEM_PROMPTS), 
             history=save_obj["history"],
         )
@@ -205,10 +203,11 @@ class ChatGPT(object):
         self.engine = config.get("engine", None)
         self.auth(**config)
         self.init_system = init_system
-        self.current_session = None
+        self.session_pool = defaultdict(dict)
         self.save_mode = save_mode
         self.save_root = save_root
         self.max_history = max_history
+        self.resume_sessions()
         
     def auth(self, api_key, api_type="openai", api_base=None, api_version="2023-03-15-preview", **kwargs):
         if api_type == "azure":
@@ -217,56 +216,51 @@ class ChatGPT(object):
             openai.api_version = api_version
         openai.api_key = api_key
 
-    def new_session(self):
-        if self.current_session:
-            self.current_session.save()
+    def new_session(self, user):
         logger.info("You have started a new chat session")
         session_id = generate_random_string(length=8)
-        self.current_session = ChatSession(
+        new_session = ChatSession(
             session_id, 
             session_name=None,
             chatgpt=self,
-            system=DEFAULT_SYSTEM_PROMPTS,
-            max_history=self.max_history
+            create_time=generate_datetime_str(),
+            system=DEFAULT_SYSTEM_PROMPTS
         )
-        self.current_session.save()
-        return self.current_session.session_id
+        self.session_pool[user][session_id] = new_session
+        return new_session
 
-    def resume_session(self, session_id=None):
-        # save current session
-        if self.current_session:
-            self.save()
+    def resume_sessions(self):
         
         # resume session
-        if session_id:
-            session_file = os.path.join(self.save_root, f"{session_id}.json")
-        else:
-            latest_sess = None
-            for sess in os.listdir(self.save_root):
-                path = os.path.join(self.save_root, sess)
-                session_content = json.load(open(path))
-                save_time = session_content["time"]
-                if latest_sess is None or save_time > latest_sess:
-                    latest_sess = path
-            session_file = latest_sess
-            if not latest_sess:
-                logger.info("[System] There is no saved session, create a new one.")
-                self.new_session()
-                return
+        for user in os.listdir(self.save_root):
+            logger.info(f"[System] Resuming session for '{user}'")
+            user_root = os.path.join(self.save_root, user)
+            for sess in os.listdir(user_root):
+                path = os.path.join(user_root, sess) 
+                session_id = os.path.basename(path).split(".")[0]
+
+                logger.info(f"[System] Resuming session from {path}")
+                self.session_pool[user][session_id] = ChatSession.resume_from_file(self, path)
+
+    def get_session(self, user, session_id=None):
+        if session_id is None:
+            latest_session_time = "19000101"
+            latest_session = None
+            for sess in self.session_pool[user].values():
+                if sess.create_time > latest_session_time:
+                    latest_session_time = sess.create_time
+                    latest_session = sess
             
-            session_id = os.path.basename(session_file).split(".")[0]
+            if latest_session is None:
+                return self.new_session(user)
+            return latest_session
 
-        logger.info(f"[System] Resuming session from {session_id}")
-        self.current_session = ChatSession.resume_from_file(self, session_file)
-
-    def chat(self, user_input: str):
-        resp = self.current_session.chat(user_input)
-        if self.save_mode == "auto":
-            self.current_session.save()
-        return resp
+        return self.session_pool[user][session_id]
 
     def save(self, verbose=True):
         """ save current session
         """
-        if self.save_root and self.current_session:
-            self.current_session.save(verbose=verbose)
+        for user, sessions in self.session_pool.items():
+            for session in sessions.values():
+                save_root = os.path.join(self.save_root, user)
+                session.save(save_root, verbose=verbose)

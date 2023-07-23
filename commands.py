@@ -7,8 +7,10 @@ class ChatGPTCommand(object):
 
     CMD_PREFIX = "_cmd_"
 
-    def __init__(self, chatgpt: ChatGPT, config: Dict):
+    def __init__(self, chatgpt, init_session, user, config: Dict):
         self.chatgpt = chatgpt
+        self.user = user
+        self.session = init_session
         self.config = config
         self.cmds = self.init_commands()
         self._cmd_help()
@@ -37,7 +39,8 @@ class ChatGPTCommand(object):
     def _cmd_new(self):
         """ create a new session
         """
-        self.chatgpt.new_session()
+        new_session = self.chatgpt.new_session(self.user)
+        self.session = new_session
 
     def _cmd_save(self):
         """ save current session
@@ -47,22 +50,20 @@ class ChatGPTCommand(object):
     def _cmd_his(self):
         """ show history of current session
         """
-        sess = self.chatgpt.current_session
+        sess = self.session
         for _id, msg in enumerate(sess.history):
             print(f"<{msg.role}>: {msg.content}")
 
     def _cmd_list(self):
         """ list all saved sessions
         """
-        sessions = os.listdir(self.config.save.root)
-        sessions = [sess for sess in sessions if sess.endswith(".json")]
+        
+        sessions = self.chatgpt.session_pool[self.user]
 
-        for idx, sess in enumerate(sessions):
-            ckpt = os.path.join(self.config.save.root, sess)
-            sess = ChatSession.resume_from_file(ckpt)
+        for idx, sess in enumerate(sessions.values()):
             
             s = f"{idx}.[{sess.session_id}]: {sess.name}"
-            if sess.id == self.chatgpt.current_session.id:
+            if sess.id == self.session.id:
                 s += " ← current"
             print(s)
 
@@ -74,7 +75,7 @@ class ChatGPTCommand(object):
     def _cmd_rename(self, session_name):
         """ rename current session
         """
-        self.chatgpt.current_session.set_session_name(session_name)
+        self.session.set_session_name(session_name)
     
     def _cmd_sys(self, system):
         """ update system prompt

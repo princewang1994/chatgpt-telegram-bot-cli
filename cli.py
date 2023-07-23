@@ -25,7 +25,7 @@ def eval_command(user_input):
         logging.debug(f"{cmd} {args}")
         commands(cmd, args)
     else:
-        rsp = chatgpt.chat(user_input)
+        rsp = commands.session.chat(user_input)
         if rsp:
             print(f"<ChatGPT>: {rsp.content}")
 
@@ -43,10 +43,11 @@ def main(args):
         save_mode=config.get("save_mode", "auto"),
         max_history=config.get("init_max_history", 10)
     )
-    chatgpt.resume_session()
-    commands = ChatGPTCommand(chatgpt, config)
+    user = os.getenv("USER")
+    session = chatgpt.get_session(user)
+    commands = ChatGPTCommand(chatgpt, session, user, config)
 
-    print(f'[System]: Prompt - "{chatgpt.current_session.system}"')
+    print(f'[System]: Prompt - "{session.system}"')
     
     while True:
 
