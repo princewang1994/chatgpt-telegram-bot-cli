@@ -1,0 +1,11 @@
+version: '3'
+services:
+  chatgpt:
+    image: chatgpt:latest
+    environment:
+      TGBOT_TOKEN: "your_telegram_bot_token"
+      OPENAI_KEY: "your_openai_api_key"
+    volumes:
+      - data:/data
+volumes:
+  data:

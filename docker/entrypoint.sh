@@ -8,6 +8,8 @@ export CONFIG_DIR=/data/configs
 export TGBOT_TOKEN
 export OPENAI_KEY
 export API_TYPE
+export API_BASE
+export API_VERSION
 export ENGINE
 
 mkdir -p $CONFIG_DIR
