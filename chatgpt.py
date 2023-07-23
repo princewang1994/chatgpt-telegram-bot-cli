@@ -208,6 +208,10 @@ class ChatGPT(object):
         self.save_root = save_root
         self.max_history = max_history
         self.resume_sessions()
+    
+    @property
+    def sessions(self):
+        return self.session_pool
         
     def auth(self, api_key, api_type="openai", api_base=None, api_version="2023-03-15-preview", **kwargs):
         if api_type == "azure":
@@ -217,7 +221,8 @@ class ChatGPT(object):
         openai.api_key = api_key
 
     def new_session(self, user):
-        logger.info("You have started a new chat session")
+        user = str(user)
+        logger.info(f"You have started a new chat session for '{user}'")
         session_id = generate_random_string(length=8)
         new_session = ChatSession(
             session_id, 
@@ -242,7 +247,12 @@ class ChatGPT(object):
                 logger.info(f"[System] Resuming session from {path}")
                 self.session_pool[user][session_id] = ChatSession.resume_from_file(self, path)
 
+    def get_user_sessions(self, user):
+        user = str(user)
+        return self.session_pool[user]
+
     def get_session(self, user, session_id=None):
+        user = str(user)
         if session_id is None:
             latest_session_time = "19000101"
             latest_session = None
@@ -254,8 +264,10 @@ class ChatGPT(object):
             if latest_session is None:
                 return self.new_session(user)
             return latest_session
-
-        return self.session_pool[user][session_id]
+        
+        if session_id in self.session_pool[user]:
+            return self.session_pool[user][session_id]
+        return None
 
     def save(self, verbose=True):
         """ save current session
