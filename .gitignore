@@ -1,6 +1,6 @@
 __pycache__/
 
-local.yaml
+local*.yaml
 run.yaml
 my.yaml
 

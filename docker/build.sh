@@ -1,0 +1,1 @@
+docker build -t chatgpt:latest -f docker/Dockerfile .

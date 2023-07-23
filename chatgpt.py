@@ -46,6 +46,7 @@ def generate_datetime_str():
     formatted_time = now.strftime("%Y%m%d_%H:%M:%S")
     return formatted_time
 
+
 class ChatGPTRole(Enum):
     SYSTEM = 0
     ASSISTANT = 1
@@ -62,34 +63,29 @@ def auto_save(fn):
     return wrap
 
 
-SYSTEM_PROMPTS = {
-    "assistant": "You are a helpful assistant.",
-}
+DEFAULT_SYSTEM_PROMPTS = "You are a helpful assistant."
 
 
 class ChatSession(object):
 
     def __init__(self, 
             session_id, 
-            session_name=None, 
-            model="gpt-3.5-turbo", 
-            engine=None,
-            system=SYSTEM_PROMPTS["assistant"], 
+            session_name,
+            chatgpt,
+            system=DEFAULT_SYSTEM_PROMPTS, 
             max_history=10, 
-            history=None,
-            save_root=None,
-            save_mode="auto"
+            history=None
         ):
 
         self.session_id = session_id
         self.session_name = session_name
-        self.model = model
-        self.engine = engine
+        self.model = chatgpt.model
+        self.engine = chatgpt.engine
         self.system = system
         self.max_history = max_history
         self.history = history or []
-        self.save_root = save_root
-        self.save_mode = save_mode
+        self.save_root = chatgpt.save_root
+        self.save_mode = chatgpt.save_mode
 
         for i, his in enumerate(self.history):
             if not isinstance(his, Message):
@@ -111,6 +107,8 @@ class ChatSession(object):
         # parse response
         try:
             # call openai api
+            logger.debug(f"model: {self.model}")
+            logger.debug(f"engine: {self.engine}")
             for msg in messages:
                 logger.debug(msg)
             completion = openai.ChatCompletion.create(
@@ -126,7 +124,7 @@ class ChatSession(object):
         except Exception as e:
             import traceback
             traceback.print_exc()
-            return None
+            return Message(role="system", content=f"system error: {e}")
 
     @property
     def id(self):
@@ -150,10 +148,7 @@ class ChatSession(object):
     def set_system(self, system):
         """ set session name
         """
-        if system in SYSTEM_PROMPTS:
-            self.system = SYSTEM_PROMPTS[system]
-        else:
-            self.system = system
+        self.system = system
         logging.info(f"[System] - {self.id}: update system='{self.system}'")
 
     def __repr__(self) -> str:
@@ -185,20 +180,15 @@ class ChatSession(object):
             logger.info(f"[System] Your session-{self.session_id} has been saved to: {save_path}")
 
     @staticmethod
-    def resume_from_file(ckpt, save_root=None, save_mode=None):
+    def resume_from_file(chatgpt, ckpt):
         save_obj = json.load(open(ckpt))
         return ChatSession(
             session_id=save_obj["session_id"], 
             session_name=save_obj.get("session_name", None),
-            model=save_obj.get("model", "gpt-3.5-turbo"), 
-            engine=save_obj.get("engine", None),
-            system=save_obj.get("system", SYSTEM_PROMPTS["assistant"]), 
-            max_history=save_obj.get("max_history", 10),
+            chatgpt=chatgpt,
+            system=save_obj.get("system", DEFAULT_SYSTEM_PROMPTS), 
             history=save_obj["history"],
-            save_root=save_root,
-            save_mode=save_mode,
         )
-        
 
 
 class ChatGPT(object):
@@ -211,7 +201,7 @@ class ChatGPT(object):
             save_root=None,
             save_mode="auto"
         ):
-        self.model_name = model
+        self.model = model
         self.engine = config.get("engine", None)
         self.auth(**config)
         self.init_system = init_system
@@ -235,12 +225,9 @@ class ChatGPT(object):
         self.current_session = ChatSession(
             session_id, 
             session_name=None,
-            model=self.model_name, 
-            engine=self.engine,
-            system=SYSTEM_PROMPTS[self.init_system],
-            max_history=self.max_history,
-            save_mode=self.save_mode,
-            save_root=self.save_root
+            chatgpt=self,
+            system=DEFAULT_SYSTEM_PROMPTS,
+            max_history=self.max_history
         )
         self.current_session.save()
         return self.current_session.session_id
@@ -270,7 +257,7 @@ class ChatGPT(object):
             session_id = os.path.basename(session_file).split(".")[0]
 
         logger.info(f"[System] Resuming session from {session_id}")
-        self.current_session = ChatSession.resume_from_file(session_file, save_root=self.save_root, save_mode=self.save_mode)
+        self.current_session = ChatSession.resume_from_file(self, session_file)
 
     def chat(self, user_input: str):
         resp = self.current_session.chat(user_input)

@@ -1,11 +1,14 @@
 #!/bin/sh
 
 set -e
+set -x
 cd ${WORKDIR}
 
 export CONFIG_DIR=/data/configs
-export TELEGRAM_TOKEN
+export TGBOT_TOKEN
 export OPENAI_KEY
+export API_TYPE
+export ENGINE
 
 mkdir -p $CONFIG_DIR
 
@@ -13,26 +16,15 @@ mkdir -p $CONFIG_DIR
 if [ -f "$CONFIG_DIR/run.yaml" ]; then
   echo "run.yaml already exists in $CONFIG_DIR"
 else
-  # check necessary tokens
-  if [ -z "$OPENAI_KEY" ]; then
-    echo "OPENAI_KEY is not set, exiting."
-    exit
-  fi
-
-  if [ -z "$TELEGRAM_TOKEN" ]; then 
-    echo "TELEGRAM_TOKEN is not set, exiting."
-    exit
-  fi
-  echo "Copying run.yaml template to $CONFIG_DIR"
-  cp $WORKDIR/configs/example.yaml $CONFIG_DIR/run.yaml
-  
-  # replace openai.api_key with $OPENAI_KEY
-  sed -i "s/api_key:.*/api_key: $OPENAI_KEY/g" $CONFIG_DIR/run.yaml
-  
-  # replace tgbot.token with $TELEGRAM_TOKEN
-  sed -i "s/token:.*/token: $TELEGRAM_TOKEN/g" $CONFIG_DIR/run.yaml
+  python3 gen_config.py \
+    --api_key=$OPENAI_KEY \
+    --api_type=$API_TYPE \
+    --api_base=$API_BASE \
+    --api_version=${API_VERSION-"2023-03-15-preview"} \
+    --engine=$ENGINE \
+    --tgbot_token=$TGBOT_TOKEN \
+    -o $CONFIG_DIR/run.yaml
 
 fi
-
 
 python3 launch.py --config=$CONFIG_DIR/run.yaml --mode=tgbot

@@ -1,0 +1,20 @@
+openai:
+  api_key: "{{ api_key }}"
+{% if api_type %}
+  api_type: "{{ api_type }}"
+  api_base: "{{ api_base }}"
+  api_version: "{{ api_version }}"
+  engine: "{{ engine}}"
+{% endif %}
+chatgpt:
+  init_prompt: "assistant"
+  init_max_history: 10
+
+save:
+  mode: "auto"
+  root: "/data/session"
+
+{% if tgbot_token %}
+tgbot:
+  token: "{{ tgbot_token }}"
+{% endif %}
