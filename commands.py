@@ -70,7 +70,7 @@ class ChatGPTCommand(object):
     def _cmd_ch(self, sess_id):
         """ resume(change) specific session with session id
         """
-        self.chatgpt.resume_session(sess_id)
+        self.session = self.chatgpt.get_session(self.user, sess_id)
 
     def _cmd_rename(self, session_name):
         """ rename current session
@@ -80,14 +80,14 @@ class ChatGPTCommand(object):
     def _cmd_sys(self, system):
         """ update system prompt
         """
-        self.chatgpt.current_session.set_system(system)
+        self.session.set_system(system)
 
     def _cmd_info(self):
         """ show current session info
         """
-        print(self.chatgpt.current_session)
+        print(self.session)
 
     def _cmd_max(self, max_history):
         """ set max history
         """
-        self.chatgpt.current_session.set_max_history(int(max_history))
+        self.session.set_max_history(int(max_history))
